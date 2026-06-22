@@ -2,6 +2,7 @@ const {
   default: makeWASocket,
   DisconnectReason,
   fetchLatestBaileysVersion,
+  Browsers,
 } = require('@whiskeysockets/baileys');
 const pino = require('pino');
 const { Boom } = require('@hapi/boom');
@@ -24,7 +25,7 @@ async function startPairing(phoneNumber, { onPairingCode, onQrFallback } = {}) {
       logger,
       printQRInTerminal: false,
       auth: state,
-      browser: ['DEAD_X_PRO', 'Chrome', '1.0.0'],
+      browser: Browsers.baileys('Desktop'),
     });
 
     sock.ev.on('creds.update', saveCreds);
