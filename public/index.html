@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>☠️ DEAD_X_PRO — Session Scanner</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@700;900&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --red: #ff0033;
+      --red-dim: #8b0000;
+      --red-glow: rgba(255, 0, 51, 0.35);
+      --bg: #050505;
+      --grid: rgba(255, 0, 51, 0.07);
+      --surface: #0d0d0d;
+      --border: rgba(255, 0, 51, 0.3);
+      --text: #e0e0e0;
+      --mono: 'Share Tech Mono', monospace;
+      --display: 'Orbitron', sans-serif;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--mono);
+      overflow-x: hidden;
+    }
+
+    /* Animated grid background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(var(--grid) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+      background-size: 40px 40px;
+      animation: gridScroll 20s linear infinite;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* World map overlay */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse 80% 60% at 50% 50%, rgba(139,0,0,0.12) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    @keyframes gridScroll {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(40px); }
+    }
+
+    .page {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+      gap: 32px;
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+    }
+
+    .skull-row {
+      font-size: 2rem;
+      letter-spacing: 12px;
+      animation: flicker 3s infinite;
+    }
+
+    .brand {
+      font-family: var(--display);
+      font-size: clamp(1.6rem, 5vw, 2.8rem);
+      font-weight: 900;
+      color: var(--red);
+      text-shadow: 0 0 20px var(--red-glow), 0 0 60px var(--red-glow);
+      letter-spacing: 6px;
+      margin: 8px 0 4px;
+    }
+
+    .tagline {
+      font-size: 0.72rem;
+      color: var(--red-dim);
+      letter-spacing: 4px;
+      text-transform: uppercase;
+    }
+
+    @keyframes flicker {
+      0%, 95%, 100% { opacity: 1; }
+      96% { opacity: 0.4; }
+      97% { opacity: 1; }
+      98% { opacity: 0.2; }
+    }
+
+    /* Card */
+    .card {
+      width: 100%;
+      max-width: 480px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      box-shadow: 0 0 40px var(--red-glow), inset 0 0 30px rgba(255,0,51,0.03);
+      padding: 32px 28px;
+      position: relative;
+    }
+
+    /* Corner brackets */
+    .card::before, .card::after {
+      content: '';
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      border-color: var(--red);
+      border-style: solid;
+    }
+    .card::before { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
+    .card::after  { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
+
+    .card-title {
+      font-size: 0.65rem;
+      letter-spacing: 4px;
+      color: var(--red);
+      text-transform: uppercase;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .card-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* Input */
+    label {
+      display: block;
+      font-size: 0.65rem;
+      letter-spacing: 3px;
+      color: var(--red-dim);
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      background: #0a0a0a;
+      border: 1px solid var(--border);
+      color: var(--red);
+      font-family: var(--mono);
+      font-size: 1rem;
+      padding: 12px 14px;
+      outline: none;
+      letter-spacing: 2px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    input[type="text"]::placeholder { color: #3a3a3a; }
+    input[type="text"]:focus {
+      border-color: var(--red);
+      box-shadow: 0 0 12px var(--red-glow);
+    }
+
+    .hint {
+      font-size: 0.6rem;
+      color: #444;
+      letter-spacing: 1px;
+      margin-top: 6px;
+    }
+
+    /* Button */
+    button {
+      width: 100%;
+      margin-top: 24px;
+      padding: 14px;
+      background: transparent;
+      border: 1px solid var(--red);
+      color: var(--red);
+      font-family: var(--display);
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: background 0.2s, box-shadow 0.2s, color 0.2s;
+    }
+    button:hover:not(:disabled) {
+      background: var(--red);
+      color: #000;
+      box-shadow: 0 0 24px var(--red-glow);
+    }
+    button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    /* Loading bar */
+    .loader-wrap {
+      display: none;
+      margin-top: 28px;
+    }
+    .loader-wrap.visible { display: block; }
+
+    .loader-label {
+      font-size: 0.6rem;
+      letter-spacing: 3px;
+      color: var(--red);
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .loader-track {
+      width: 100%;
+      height: 6px;
+      background: #111;
+      border: 1px solid var(--red-dim);
+      overflow: hidden;
+    }
+
+    .loader-bar {
+      height: 100%;
+      width: 0%;
+      background: var(--red);
+      box-shadow: 0 0 10px var(--red);
+      transition: width 0.1s linear;
+      animation: barGlitch 0.4s steps(1) infinite;
+    }
+
+    @keyframes barGlitch {
+      0%, 90% { opacity: 1; }
+      91% { opacity: 0.3; }
+      92% { opacity: 1; }
+    }
+
+    /* Result box */
+    .result {
+      display: none;
+      margin-top: 28px;
+      padding: 20px;
+      border: 1px solid var(--border);
+      background: #080808;
+      position: relative;
+    }
+    .result.visible { display: block; }
+
+    .result-label {
+      font-size: 0.6rem;
+      letter-spacing: 3px;
+      color: var(--red-dim);
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .pairing-code {
+      font-family: var(--display);
+      font-size: clamp(1.6rem, 8vw, 2.4rem);
+      font-weight: 900;
+      color: var(--red);
+      text-shadow: 0 0 20px var(--red-glow);
+      letter-spacing: 10px;
+      text-align: center;
+      margin-bottom: 16px;
+      animation: flicker 4s infinite;
+    }
+
+    .result-step {
+      font-size: 0.62rem;
+      color: #666;
+      letter-spacing: 1px;
+      line-height: 1.8;
+    }
+    .result-step span {
+      color: var(--red);
+    }
+
+    .session-id-wrap {
+      display: none;
+      margin-top: 28px;
+      padding: 20px;
+      border: 1px solid rgba(0, 255, 80, 0.2);
+      background: #040f04;
+    }
+    .session-id-wrap.visible { display: block; }
+
+    .session-id-label {
+      font-size: 0.6rem;
+      letter-spacing: 3px;
+      color: #00cc44;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .session-id-value {
+      font-size: 0.75rem;
+      color: #00ff55;
+      word-break: break-all;
+      letter-spacing: 1px;
+      text-shadow: 0 0 10px rgba(0,255,85,0.4);
+      margin-bottom: 12px;
+    }
+
+    .copy-btn {
+      width: auto;
+      padding: 8px 20px;
+      font-size: 0.6rem;
+      border-color: #00cc44;
+      color: #00cc44;
+      margin-top: 0;
+      letter-spacing: 3px;
+    }
+    .copy-btn:hover:not(:disabled) {
+      background: #00cc44;
+      color: #000;
+      box-shadow: 0 0 16px rgba(0,204,68,0.4);
+    }
+
+    .error-msg {
+      display: none;
+      margin-top: 16px;
+      padding: 12px 14px;
+      border: 1px solid #ff0033;
+      background: #100000;
+      font-size: 0.65rem;
+      color: #ff6666;
+      letter-spacing: 1px;
+      line-height: 1.6;
+    }
+    .error-msg.visible { display: block; }
+
+    /* Footer */
+    .footer {
+      font-size: 0.58rem;
+      letter-spacing: 3px;
+      color: #333;
+      text-align: center;
+    }
+    .footer span { color: var(--red-dim); }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <div class="skull-row">☠️ ☠️ ☠️</div>
+    <div class="brand">DEAD_X_PRO</div>
+    <div class="tagline">Session Scanner // Pairing System</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">// Initiate Pairing</div>
+
+    <label for="phone">WhatsApp Number</label>
+    <input
+      type="text"
+      id="phone"
+      placeholder="2348012345678"
+      maxlength="15"
+      autocomplete="off"
+    />
+    <div class="hint">Country code + number, digits only. No +, spaces, or dashes.</div>
+
+    <button id="pairBtn" onclick="requestPairing()">
+      ⚡ Generate Pairing Code
+    </button>
+
+    <!-- Loading bar -->
+    <div class="loader-wrap" id="loader">
+      <div class="loader-label">
+        <span>LOADING...</span>
+        <span id="pct">0%</span>
+      </div>
+      <div class="loader-track">
+        <div class="loader-bar" id="bar"></div>
+      </div>
+    </div>
+
+    <!-- Pairing code result -->
+    <div class="result" id="result">
+      <div class="result-label">// Pairing Code</div>
+      <div class="pairing-code" id="codeDisplay">--------</div>
+      <div class="result-step">
+        1. Open WhatsApp on your phone<br>
+        2. Go to <span>Linked Devices</span><br>
+        3. Tap <span>Link a Device</span><br>
+        4. Choose <span>Link with phone number instead</span><br>
+        5. Enter the code above
+      </div>
+    </div>
+
+    <!-- Session ID (shown after successful link) -->
+    <div class="session-id-wrap" id="sessionWrap">
+      <div class="session-id-label">✅ // Session ID — Save This</div>
+      <div class="session-id-value" id="sessionDisplay"></div>
+      <button class="copy-btn" onclick="copySession()">Copy Session ID</button>
+    </div>
+
+    <!-- Error -->
+    <div class="error-msg" id="errorMsg"></div>
+  </div>
+
+  <div class="footer">by <span>DEAD XMILE</span> // DEAD_X_PRO</div>
+</div>
+
+<script>
+  let loaderInterval = null;
+
+  function setLoading(on) {
+    const loader = document.getElementById('loader');
+    const btn = document.getElementById('pairBtn');
+    const bar = document.getElementById('bar');
+    const pct = document.getElementById('pct');
+
+    if (on) {
+      loader.classList.add('visible');
+      btn.disabled = true;
+      let p = 0;
+      bar.style.width = '0%';
+      pct.textContent = '0%';
+      loaderInterval = setInterval(() => {
+        // Animate to ~85% then stall — fills to 100% on success
+        if (p < 85) p += Math.random() * 4;
+        bar.style.width = p + '%';
+        pct.textContent = Math.floor(p) + '%';
+      }, 120);
+    } else {
+      clearInterval(loaderInterval);
+      bar.style.width = '100%';
+      pct.textContent = '100%';
+      setTimeout(() => {
+        loader.classList.remove('visible');
+        btn.disabled = false;
+        bar.style.width = '0%';
+      }, 600);
+    }
+  }
+
+  function showError(msg) {
+    const el = document.getElementById('errorMsg');
+    el.textContent = '❌ ' + msg;
+    el.classList.add('visible');
+  }
+
+  function clearError() {
+    document.getElementById('errorMsg').classList.remove('visible');
+  }
+
+  async function requestPairing() {
+    clearError();
+    document.getElementById('result').classList.remove('visible');
+    document.getElementById('sessionWrap').classList.remove('visible');
+
+    const phone = document.getElementById('phone').value.trim().replace(/\D/g, '');
+    if (!/^\d{8,15}$/.test(phone)) {
+      showError('Enter a valid number with country code (digits only).');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const res = await fetch('/pair', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phoneNumber: phone }),
+      });
+
+      const data = await res.json();
+      setLoading(false);
+
+      if (!res.ok || data.error) {
+        showError(data.error || 'Something went wrong. Try again.');
+        return;
+      }
+
+      // Show pairing code
+      document.getElementById('codeDisplay').textContent = data.pairingCode || '--------';
+      document.getElementById('result').classList.add('visible');
+
+      // Poll for session ID (server logs it but we need to surface it)
+      // Since the server resolves the session async after the user links,
+      // we poll /session/:phone every 4s for up to 90s
+      pollForSession(phone);
+
+    } catch (err) {
+      setLoading(false);
+      showError('Network error. Check your connection and try again.');
+    }
+  }
+
+  async function pollForSession(phone) {
+    const maxAttempts = 22;
+    let attempts = 0;
+
+    const interval = setInterval(async () => {
+      attempts++;
+      if (attempts > maxAttempts) {
+        clearInterval(interval);
+        return;
+      }
+
+      try {
+        const res = await fetch('/session-status?phone=' + phone);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.sessionId) {
+          clearInterval(interval);
+          document.getElementById('sessionDisplay').textContent = data.sessionId;
+          document.getElementById('sessionWrap').classList.add('visible');
+        }
+      } catch (_) {}
+    }, 4000);
+  }
+
+  function copySession() {
+    const val = document.getElementById('sessionDisplay').textContent;
+    navigator.clipboard.writeText(val).then(() => {
+      const btn = document.querySelector('.copy-btn');
+      btn.textContent = '✅ Copied!';
+      setTimeout(() => btn.textContent = 'Copy Session ID', 2000);
+    });
+  }
+</script>
+</body>
+</html>
