@@ -1,0 +1,17 @@
+{
+  "name": "dead-x-pro-scanner",
+  "version": "1.0.0",
+  "description": "DEAD_X_PRO pairing-code session scanner",
+  "main": "server.js",
+  "type": "commonjs",
+  "engines": { "node": ">=20.0.0" },
+  "scripts": { "start": "node server.js" },
+  "dependencies": {
+    "@whiskeysockets/baileys": "^6.7.9",
+    "express": "^4.19.2",
+    "dotenv": "^16.4.5",
+    "mongoose": "^8.5.0",
+    "pino": "^9.3.2",
+    "@hapi/boom": "^10.0.1"
+  }
+}
