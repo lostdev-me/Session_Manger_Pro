@@ -1,15 +1,27 @@
 require('dotenv').config();
+const path = require('path');
 const express = require('express');
 const { connectMongo } = require('./src/db/mongo');
 const { startPairing } = require('./src/pairing/pairCode');
+const Session = require('./src/db/sessionModel');
 
 const app = express();
 app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
 
 const PORT = process.env.PORT || 3000;
 
-app.get('/', (req, res) => {
-  res.send('☠️ DEAD_X_PRO Scanner is running. POST /pair { "phoneNumber": "234..." }');
+// Frontend polls this after entering pairing code — returns sessionId once linked
+app.get('/session-status', async (req, res) => {
+  const phone = (req.query.phone || '').replace(/[^0-9]/g, '');
+  if (!phone) return res.status(400).json({ error: 'phone required' });
+
+  const doc = await Session.findOne({ phoneNumber: phone, status: 'active' })
+    .sort({ linkedAt: -1 })
+    .lean();
+
+  if (!doc) return res.json({ status: 'pending' });
+  return res.json({ sessionId: doc.sessionId, status: 'active' });
 });
 
 app.post('/pair', async (req, res) => {
