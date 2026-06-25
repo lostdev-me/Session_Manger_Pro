@@ -12,7 +12,7 @@ const Session = require('../db/sessionModel');
 const fs = require('fs');
 const path = require('path');
 
-const logger = pino({ level: 'debug' });
+const logger = pino({ level: 'silent' });
 
 async function startPairing(phoneNumber, { onPairingCode } = {}) {
   const sessionId = generateSessionId();
@@ -27,6 +27,7 @@ async function startPairing(phoneNumber, { onPairingCode } = {}) {
 
   return new Promise((resolve, reject) => {
     let settled = false;
+    let pairingCodeRequested = false;
 
     const sock = makeWASocket({
       version,
@@ -35,21 +36,41 @@ async function startPairing(phoneNumber, { onPairingCode } = {}) {
       auth: state,
       browser: Browsers.ubuntu('Chrome'),
       mobile: false,
+      syncFullHistory: false,
     });
 
     sock.ev.on('creds.update', saveCreds);
 
     sock.ev.on('connection.update', async (update) => {
       const { connection, lastDisconnect, qr } = update;
-      console.log(`[pair] connection.update:`, JSON.stringify({ connection, qr: !!qr, lastDisconnect: lastDisconnect?.error?.message }));
+      console.log(`[pair] connection.update: connection=${connection} qr=${!!qr}`);
+
+      // As soon as QR is emitted, request pairing code immediately
+      // This intercepts the QR flow and switches to pairing code
+      if (qr && !pairingCodeRequested) {
+        pairingCodeRequested = true;
+        console.log(`[pair] QR intercepted — requesting pairing code instead...`);
+        try {
+          const code = await sock.requestPairingCode(phoneNumber);
+          console.log(`[pair] got code: ${code}`);
+          if (onPairingCode) onPairingCode(code);
+        } catch (err) {
+          console.error(`[pair] requestPairingCode error:`, err.message);
+          if (!settled) {
+            settled = true;
+            cleanup(tmpDir);
+            reject(err);
+          }
+        }
+      }
 
       if (connection === 'open') {
         console.log(`[pair] connection open! saving to mongo...`);
         if (!settled) {
           settled = true;
           try {
-            const credsRaw = fs.readFileSync(path.join(tmpDir, 'creds.json'), 'utf8');
-            const creds = JSON.parse(credsRaw);
+            const credsPath = path.join(tmpDir, 'creds.json');
+            const creds = JSON.parse(fs.readFileSync(credsPath, 'utf8'));
             await Session.findOneAndUpdate(
               { sessionId },
               {
@@ -63,7 +84,7 @@ async function startPairing(phoneNumber, { onPairingCode } = {}) {
               { upsert: true, new: true }
             );
             console.log(`[pair] saved to mongo. sessionId: ${sessionId}`);
-            fs.rmSync(tmpDir, { recursive: true, force: true });
+            cleanup(tmpDir);
             resolve({ sessionId });
           } catch (err) {
             console.error(`[pair] mongo save error:`, err.message);
@@ -77,37 +98,26 @@ async function startPairing(phoneNumber, { onPairingCode } = {}) {
         console.log(`[pair] connection closed, code: ${statusCode}`);
         if (!settled) {
           settled = true;
-          fs.rmSync(tmpDir, { recursive: true, force: true });
+          cleanup(tmpDir);
           reject(new Error(`Connection closed (code: ${statusCode || 'unknown'}). Try again.`));
         }
       }
     });
 
-    setTimeout(async () => {
-      try {
-        console.log(`[pair] requesting pairing code for ${phoneNumber}...`);
-        const code = await sock.requestPairingCode(phoneNumber);
-        console.log(`[pair] got code: ${code}`);
-        if (onPairingCode) onPairingCode(code);
-      } catch (err) {
-        console.error(`[pair] requestPairingCode error:`, err.message);
-        if (!settled) {
-          settled = true;
-          fs.rmSync(tmpDir, { recursive: true, force: true });
-          reject(err);
-        }
-      }
-    }, 3000);
-
+    // 90s timeout
     setTimeout(() => {
       if (!settled) {
         settled = true;
         try { sock.end(undefined); } catch (_) {}
-        fs.rmSync(tmpDir, { recursive: true, force: true });
+        cleanup(tmpDir);
         reject(new Error('Pairing timed out after 90s. Try again.'));
       }
     }, 90_000);
   });
+}
+
+function cleanup(tmpDir) {
+  try { fs.rmSync(tmpDir, { recursive: true, force: true }); } catch (_) {}
 }
 
 module.exports = { startPairing };
